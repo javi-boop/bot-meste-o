@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, Response
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 from datetime import datetime
@@ -24,7 +24,7 @@ def webhook():
     mensaje_lower = mensaje.lower()
 
     if mensaje_lower == "ayuda":
-        msg.body("COMANDOS:\nagregar Juan +521XXXXXXXXXX Empresa RFC\nver rancheros\npide factura a Juan\npide facturas a todos\nfacturas del dia\nlimpiar\nayuda")
+        msg.body("COMANDOS:\nagregar Juan +521XXXXXXXXXX Empresa\nver rancheros\npide factura a Juan\npide facturas a todos\nfacturas del dia\nlimpiar\nayuda")
 
     elif mensaje_lower == "ver rancheros":
         if rancheros:
@@ -41,11 +41,10 @@ def webhook():
             nombre = partes[1].lower()
             numero = partes[2]
             empresa = partes[3] if len(partes) >= 4 else "Sin empresa"
-            rfc = partes[4] if len(partes) >= 5 else "Sin RFC"
-            rancheros[nombre] = {"numero": "whatsapp:" + numero, "empresa": empresa, "rfc": rfc}
-            msg.body("Ranchero " + nombre.capitalize() + " agregado. Empresa: " + empresa)
+            rancheros[nombre] = {"numero": "whatsapp:" + numero, "empresa": empresa}
+            msg.body("Ranchero " + nombre.capitalize() + " agregado.")
         else:
-            msg.body("Formato: agregar Nombre +521XXXXXXXXXX Empresa RFC")
+            msg.body("Formato: agregar Nombre +521XXXXXXXXXX Empresa")
 
     elif mensaje_lower.startswith("pide factura a "):
         nombre = mensaje_lower.replace("pide factura a ", "").strip()
@@ -89,7 +88,7 @@ def webhook():
         facturas.append({"de": nombre_ranchero, "empresa": empresa_ranchero, "numero": remitente, "contenido": mensaje, "hora": datetime.now().strftime("%H:%M")})
         msg.body("Factura recibida. Gracias, en breve la coordinadora la revisara.")
 
-    return str(resp)
+    return Response(str(resp), mimetype="text/xml")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
